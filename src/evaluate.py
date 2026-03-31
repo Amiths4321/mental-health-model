@@ -3,15 +3,17 @@ import joblib
 
 from sklearn.metrics import (
     accuracy_score,
+    roc_auc_score,
     classification_report,
-    roc_auc_score
+    confusion_matrix
 )
-
-from sklearn.model_selection import train_test_split
 
 TARGET_COLUMN = "treatment"
 
+
 def evaluate():
+
+    print("Loading data...")
 
     df = pd.read_csv(
         "data/processed/mental_health_processed.csv"
@@ -20,43 +22,33 @@ def evaluate():
     X = df.drop(TARGET_COLUMN, axis=1)
     y = df[TARGET_COLUMN]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42,
-        stratify=y
+    # Load selector
+    selector = joblib.load(
+        "models/feature_selector.pkl"
     )
 
+    X_selected = selector.transform(X)
+
+    # Load model
     model = joblib.load(
         "models/mental_health_model.pkl"
     )
 
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(X_selected)
 
-    y_prob = model.predict_proba(X_test)[:, 1]
+    y_prob = model.predict_proba(X_selected)[:, 1]
 
-    acc = accuracy_score(
-        y_test,
-        y_pred
-    )
+    print("\nAccuracy:")
+    print(accuracy_score(y, y_pred))
 
-    roc = roc_auc_score(
-        y_test,
-        y_prob
-    )
+    print("\nROC-AUC:")
+    print(roc_auc_score(y, y_prob))
 
-    print("Accuracy:", acc)
-    print("ROC-AUC:", roc)
+    print("\nClassification Report:")
+    print(classification_report(y, y_pred))
 
-    print("\nClassification Report:\n")
-
-    print(
-        classification_report(
-            y_test,
-            y_pred
-        )
-    )
+    print("\nConfusion Matrix:")
+    print(confusion_matrix(y, y_pred))
 
 
 if __name__ == "__main__":
