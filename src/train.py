@@ -17,27 +17,22 @@ TARGET_COLUMN = "treatment"
 
 def train():
 
-    print("Loading data...")
-
     df = pd.read_csv(
         "data/processed/mental_health_processed.csv"
     )
 
     X = df.drop(TARGET_COLUMN, axis=1)
+
     y = df[TARGET_COLUMN]
 
-    print("Dataset Shape:", df.shape)
-
-    # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
         test_size=0.2,
-        random_state=42,
-        stratify=y
+        stratify=y,
+        random_state=42
     )
 
-    # Pipeline
     pipeline = Pipeline([
 
         (
@@ -54,40 +49,36 @@ def train():
                 n_estimators=300,
                 max_depth=6,
                 learning_rate=0.05,
-                random_state=42,
-                eval_metric="logloss"
+                eval_metric="logloss",
+                random_state=42
             )
         )
 
     ])
-
-    print("Training model...")
 
     pipeline.fit(
         X_train,
         y_train
     )
 
-    # Evaluate
     y_pred = pipeline.predict(X_test)
 
     y_prob = pipeline.predict_proba(
         X_test
     )[:, 1]
 
-    print("\nAccuracy:",
+    print("Accuracy:",
           accuracy_score(y_test, y_pred))
 
     print("ROC-AUC:",
           roc_auc_score(y_test, y_prob))
 
-    # Save pipeline
     joblib.dump(
         pipeline,
         "models/mental_health_pipeline.pkl"
     )
 
-    print("\n✅ Pipeline model saved!")
+    print("✅ Model Saved")
 
 
 if __name__ == "__main__":

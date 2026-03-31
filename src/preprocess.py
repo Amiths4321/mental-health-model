@@ -15,39 +15,22 @@ def preprocess():
 
     print("Original Shape:", df.shape)
 
-    # -------------------------
-    # Drop unnecessary columns
-    # -------------------------
-
-    drop_cols = [
-        "Timestamp",
-        "comments"
-    ]
-
+    # Drop unwanted columns
     df = df.drop(
-        columns=drop_cols,
+        columns=["Timestamp", "comments"],
         errors="ignore"
     )
 
-    # -------------------------
-    # Handle missing values
-    # -------------------------
-
+    # Remove missing values
     df = df.dropna()
 
-    # -------------------------
     # Convert target
-    # -------------------------
-
     df[TARGET_COLUMN] = df[TARGET_COLUMN].map({
         "Yes": 1,
         "No": 0
     })
 
-    # -------------------------
-    # Encode categorical columns
-    # -------------------------
-
+    # Encode categorical
     encoders = {}
 
     categorical_cols = df.select_dtypes(
@@ -56,71 +39,45 @@ def preprocess():
 
     for col in categorical_cols:
 
-        if col != TARGET_COLUMN:
+        le = LabelEncoder()
 
-            le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
 
-            df[col] = le.fit_transform(
-                df[col]
-            )
+        encoders[col] = le
 
-            encoders[col] = le
-
-    # Save encoders
     joblib.dump(
         encoders,
         "models/label_encoders.pkl"
     )
 
-    print("✅ Encoders saved")
-
-    # -------------------------
-    # Split features and target
-    # -------------------------
-
-    X = df.drop(
-        TARGET_COLUMN,
-        axis=1
-    )
+    # Split
+    X = df.drop(TARGET_COLUMN, axis=1)
 
     y = df[TARGET_COLUMN]
 
-    # -------------------------
-    # Scale features
-    # -------------------------
-
+    # Scale
     scaler = StandardScaler()
 
     X_scaled = scaler.fit_transform(X)
 
-    # Save scaler
     joblib.dump(
         scaler,
         "models/scaler.pkl"
     )
-
-    print("✅ Scaler saved")
-
-    # -------------------------
-    # Save processed dataset
-    # -------------------------
 
     processed_df = pd.DataFrame(
         X_scaled,
         columns=X.columns
     )
 
-    processed_df[TARGET_COLUMN] = y.reset_index(
-        drop=True
-    )
+    processed_df[TARGET_COLUMN] = y.reset_index(drop=True)
 
     processed_df.to_csv(
         "data/processed/mental_health_processed.csv",
         index=False
     )
 
-    print("✅ Preprocessing completed!")
-    print("Processed Shape:", processed_df.shape)
+    print("✅ Preprocessing Done")
 
 
 if __name__ == "__main__":
